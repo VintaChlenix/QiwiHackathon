@@ -16,7 +16,6 @@ func getExchangeRate(rawCode, rawDate string) (string, error) {
 	_, date, _ := strings.Cut(rawDate, "=")
 	splittedDate := strings.Split(date, "-")
 	url := fmt.Sprintf("http://www.cbr.ru/scripts/XML_daily.asp?date_req=%s/%s/%s", splittedDate[2], splittedDate[1], splittedDate[0])
-
 	valCurs, err := getValCursFromURL(url)
 	if err != nil {
 		return "", fmt.Errorf("failed to get exchange schema: %v", err)
@@ -63,7 +62,7 @@ func main() {
 		case "currency_rates":
 			result, err := getExchangeRate(data[1], data[2])
 			if err != nil {
-				fmt.Printf("failed to get exchange rate: %v", err)
+				fmt.Printf("failed to get exchange rate: %v\n", err)
 				continue
 			}
 			fmt.Println(result)
