@@ -14,7 +14,7 @@ func main() {
 		data := strings.Split(scanner.Text(), " ")
 		switch data[0] {
 		case "currency_rates":
-			result, err := app.GetExchangeRate(data[1], data[2])
+			result, err := app.GetExchangeRate(data)
 			if err != nil {
 				fmt.Printf("failed to get exchange rate: %v\n", err)
 				continue
