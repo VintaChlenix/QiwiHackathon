@@ -4,7 +4,8 @@ import (
 	"encoding/xml"
 	"example.com/m/v2/internal/xmls"
 	"fmt"
-	"io"
+	"golang.org/x/net/html/charset"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -13,6 +14,7 @@ func GetExchangeRate(data []string) (string, error) {
 	_, code, _ := strings.Cut(data[1], "=")
 	_, date, _ := strings.Cut(data[2], "=")
 	splittedDate := strings.Split(date, "-")
+
 	url := fmt.Sprintf("http://www.cbr.ru/scripts/XML_daily.asp?date_req=%s/%s/%s", splittedDate[2], splittedDate[1], splittedDate[0])
 
 	curRates, err := getCurrenciesRatesFromURL(url)
@@ -30,7 +32,15 @@ func GetExchangeRate(data []string) (string, error) {
 }
 
 func getCurrenciesRatesFromURL(url string) (*xmls.ValCurs, error) {
-	response, err := http.Get(url)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	req.Header.Set("User-Agent", "Golang_Spider_Bot/3.0")
+
+	response, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get xml scheme: %w", err)
 	}
@@ -40,15 +50,10 @@ func getCurrenciesRatesFromURL(url string) (*xmls.ValCurs, error) {
 		return nil, fmt.Errorf("status error: %v", response.StatusCode)
 	}
 
-	schema, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read body: %v", err)
-	}
-
 	exchangeRates := new(xmls.ValCurs)
-	if err := xml.Unmarshal(schema, &exchangeRates); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal xml: %w", err)
-	}
+	decoder := xml.NewDecoder(response.Body)
+	decoder.CharsetReader = charset.NewReaderLabel
+	err = decoder.Decode(&exchangeRates)
 
-	return exchangeRates, nil
+	return exchangeRates, err
 }
